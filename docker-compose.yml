@@ -1,0 +1,16 @@
+version: '3.2'
+
+services:
+
+  notes_app:
+    build:
+      context: .
+    container_name: notes_container_app
+    environment:
+      - DEBUG=True
+    restart: always
+    volumes:
+      - ./:/opt/app
+    ports:
+      - 5000:5000
+    command: bash -c "python3 -m notes"
