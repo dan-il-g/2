@@ -29,15 +29,6 @@ class ItemCBV:
         self.session.commit()
         return NoteCreateOut.from_orm(item_orm)
 
-    @router.get("/notes")
-    def get_items(self) -> t.List[NoteCreateOut]:
-        """
-        Получить все заметки
-        :return:
-        """
-        items_lists = self.session.query(NotesOrm)
-        return [NoteCreateOut.from_orm_list(x, count_title_symbols) for x in items_lists]
-
     @router.get("/notes/{id}")
     def get_item(self, id: int) -> NoteCreateOut:
         """
@@ -64,4 +55,35 @@ class ItemCBV:
         self.session.add(result)
         self.session.commit()
         return NoteCreateOut.from_orm(result)
+
+    @router.get("/notes")
+    def get_item_by_query_or_all(self, query: t.Optional[str] = None) -> t.List[NoteCreateOut]:
+        """
+        Получить заметку по Query или получить ВСЕ заметки
+        :return:
+        """
+        if query is None:
+            results = self.session.query(NotesOrm)
+        else:
+            results = self.session.query(NotesOrm).filter(
+                (NotesOrm.title.contains(query)) |
+                (NotesOrm.content.contains(query))
+            )
+
+        return [NoteCreateOut.from_orm_list(x, count_title_symbols) for x in results]
+
+    @router.delete("/notes/{id}")
+    def update_item(self, id: int) -> NoteCreateOut:
+        """
+        Получить заметку по ID
+        :return:
+        """
+        result = self.session.query(NotesOrm).filter(NotesOrm.id == id).first()
+        if not result:
+            raise HTTPException(status_code=404, detail="Notes not found")
+        # Update
+        dropped = NoteCreateOut.from_orm(result)
+        self.session.delete(result)
+        self.session.commit()
+        return dropped
 
